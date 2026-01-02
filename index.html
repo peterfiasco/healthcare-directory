@@ -302,13 +302,15 @@
   </div>
 
   <script>
-    // ✅ Correct Published CSV URL (your new link)
-    const CSV_URL =
+    // ✅ Your Google Sheet (published CSV)
+    const RAW_CSV =
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3jamk8r86opcs7NzKrlhMBDK3SatVNVhukfzQfvEi85X4C8qrb2XIqC9CgPeI4LTiBhjsKAHHyqJ/pub?output=csv";
 
-    // CORS helpers (static hosting friendly)
-    const ALLORIGINS = "https://api.allorigins.win/raw?url=";
-    const JINA = "https://r.jina.ai/http://"; // fallback
+    // ✅ Your Cloudflare Worker proxy (reliable + CORS enabled)
+    const WORKER_PROXY = "https://thrivewa-sheets-proxy.wazobia-nigeri.workers.dev/";
+
+    // ✅ This is what we fetch in the browser
+    const CSV_URL = WORKER_PROXY + "?url=" + encodeURIComponent(RAW_CSV);
 
     let allProviders = [];
     let filteredProviders = [];
@@ -319,9 +321,18 @@
       const errorBox = document.getElementById("errorBox");
 
       try {
-        const csvText = await fetchWithFallback(CSV_URL);
-        allProviders = parseCSV(csvText);
+        const response = await fetch(CSV_URL, { cache: "no-store" });
+        const csvText = await response.text();
 
+        if (!response.ok) {
+          throw new Error(`Proxy fetch failed (${response.status}).`);
+        }
+
+        if (!looksLikeCSV(csvText)) {
+          throw new Error("Response was not CSV. (Sheet may not be published / wrong URL / proxy blocked)");
+        }
+
+        allProviders = parseCSV(csvText);
         populateFilters();
         filteredProviders = [...allProviders];
         renderProviders();
@@ -335,42 +346,31 @@
         errorBox.style.display = "block";
         errorBox.textContent =
           "Reason: " + (err?.message || err) + "\n\n" +
-          "Fix options:\n" +
-          "1) Reload (the proxy may have rate limits)\n" +
-          "2) For 100% reliability, use a tiny Cloudflare Worker/Netlify Function proxy.";
-      }
-    }
-
-    async function fetchWithFallback(url) {
-      // Try AllOrigins
-      try {
-        const res1 = await fetch(ALLORIGINS + encodeURIComponent(url), { cache: "no-store" });
-        if (!res1.ok) throw new Error("AllOrigins failed (" + res1.status + ")");
-        const text1 = await res1.text();
-        if (!looksLikeCSV(text1)) throw new Error("AllOrigins returned non-CSV response");
-        return text1;
-      } catch (e) {
-        // Try Jina fallback
-        const cleaned = url.replace(/^https?:\/\//i, "");
-        const res2 = await fetch(JINA + cleaned, { cache: "no-store" });
-        if (!res2.ok) throw new Error("Jina fallback failed (" + res2.status + ")");
-        const text2 = await res2.text();
-
-        const extracted = extractCSVFromText(text2);
-        if (!looksLikeCSV(extracted)) throw new Error("Fallback returned non-CSV response");
-        return extracted;
+          "Debug tip: open the worker CSV link directly to confirm it returns CSV.\n" +
+          "First chars:\n" + (String(err?.rawPreview || "").slice(0, 200) || "(no preview)");
       }
     }
 
     function looksLikeCSV(text) {
-      return /(^|,)\s*Name\s*(,|$)/i.test(text) && text.includes("\n");
-    }
+      if (!text) return false;
+      const t = text.trim();
 
-    function extractCSVFromText(text) {
-      const lines = text.split("\n");
-      const idx = lines.findIndex(l => /(^|,)\s*Name\s*(,|$)/i.test(l));
-      if (idx >= 0) return lines.slice(idx).join("\n");
-      return text;
+      // Reject HTML/error pages
+      if (
+        t.startsWith("<!DOCTYPE") ||
+        t.startsWith("<html") ||
+        t.toLowerCase().includes("sign in") ||
+        t.toLowerCase().includes("sorry, the file you have requested does not exist") ||
+        t.toLowerCase().includes("missing ?url=")
+      ) return false;
+
+      // Must have at least 2 non-empty lines
+      const lines = t.split(/\r?\n/).filter(l => l.trim() !== "");
+      if (lines.length < 2) return false;
+
+      // Header must have multiple columns
+      const header = lines[0];
+      return header.includes(",") && header.split(",").length >= 2;
     }
 
     // Robust CSV parser (handles commas inside quotes)
@@ -423,7 +423,7 @@
     function normalizeList(str) {
       if (!str) return [];
       return str
-        .split(/[;,]/)   // split on comma OR semicolon
+        .split(/[;,]/)
         .map(s => s.trim())
         .filter(Boolean);
     }
@@ -536,9 +536,7 @@
         const specialty = (provider.Specialty || "").toLowerCase();
 
         const matchesSearch =
-          !searchTerm ||
-          name.includes(searchTerm) ||
-          specialty.includes(searchTerm);
+          !searchTerm || name.includes(searchTerm) || specialty.includes(searchTerm);
 
         const matchesType =
           currentType === "all" ||
