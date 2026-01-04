@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Multilingual Healthcare Directory - ThriveWA</title>
+  <title>Service Directory - ThriveWA</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -33,7 +33,7 @@
       border-radius: 8px;
       margin-bottom: 30px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 15px;
     }
 
@@ -52,6 +52,7 @@
       border-radius: 6px;
       font-size: 14px;
       transition: border-color 0.3s;
+      background: #fff;
     }
 
     input:focus, select:focus {
@@ -59,35 +60,12 @@
       border-color: #00897b;
     }
 
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 25px;
-      border-bottom: 2px solid #e0e0e0;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      padding: 12px 24px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 500;
-      color: #666;
-      border-bottom: 3px solid transparent;
-      transition: all 0.3s;
-    }
-
-    .tab:hover { color: #00897b; }
-    .tab.active { color: #00897b; border-bottom-color: #00897b; }
-
     .provider-grid { display: grid; gap: 20px; }
 
     .provider-card {
       background: #fff;
       border: 1px solid #e0e0e0;
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 20px;
       transition: all 0.3s;
     }
@@ -101,66 +79,79 @@
       display: flex;
       justify-content: space-between;
       align-items: start;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
       gap: 10px;
     }
 
     .provider-name {
       font-size: 20px;
-      font-weight: 600;
+      font-weight: 700;
       color: #00897b;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
-    .provider-specialty { color: #666; font-size: 14px; }
+    .provider-specialty {
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+    }
 
     .provider-details {
       display: grid;
       gap: 10px;
-      margin-bottom: 15px;
+      margin-top: 10px;
     }
 
     .detail-row { display: flex; align-items: start; gap: 10px; }
-
-    .detail-label {
-      font-weight: 600;
-      color: #555;
-      min-width: 80px;
-      font-size: 14px;
-    }
-
-    .detail-value { color: #666; font-size: 14px; }
+    .detail-label { font-weight: 700; color: #555; min-width: 140px; font-size: 13px; }
+    .detail-value { color: #666; font-size: 13px; }
 
     .tags {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 15px;
+      margin-top: 14px;
     }
 
     .tag {
       background: #b2dfdb;
       color: #00695c;
       padding: 5px 12px;
-      border-radius: 15px;
+      border-radius: 999px;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
-    .contact-btn {
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .btn {
       display: inline-block;
       background: #00897b;
       color: white;
-      padding: 10px 20px;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border-radius: 8px;
       text-decoration: none;
-      font-weight: 500;
-      transition: background 0.3s;
-      margin-top: 10px;
+      font-weight: 600;
+      transition: background 0.25s;
+      font-size: 13px;
     }
 
-    .contact-btn:hover { background: #00695c; }
+    .btn:hover { background: #00695c; }
+
+    .btn.secondary {
+      background: #e3f2fd;
+      color: #0277bd;
+    }
+
+    .btn.secondary:hover {
+      background: #d6ecff;
+    }
 
     .no-results {
       text-align: center;
@@ -188,34 +179,11 @@
       white-space: pre-wrap;
     }
 
-    .external-links {
-      background: #e3f2fd;
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 30px;
-    }
-
-    .external-links h3 {
-      color: #00897b;
-      margin-bottom: 15px;
-      font-size: 20px;
-    }
-
-    .external-links ul { list-style: none; }
-    .external-links li { margin-bottom: 10px; }
-
-    .external-links a {
-      color: #0277bd;
-      text-decoration: none;
-    }
-
-    .external-links a:hover { text-decoration: underline; }
-
     .disclaimer {
       background: #fff3cd;
       border: 1px solid #ffc107;
-      border-radius: 8px;
-      padding: 20px;
+      border-radius: 10px;
+      padding: 18px;
       margin-top: 30px;
       font-size: 14px;
       color: #856404;
@@ -223,7 +191,7 @@
 
     .disclaimer strong {
       display: block;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       color: #856404;
     }
 
@@ -231,110 +199,111 @@
       .container { padding: 20px; }
       h1 { font-size: 24px; }
       .search-filters { grid-template-columns: 1fr; }
-      .tabs { overflow-x: auto; }
-      .provider-header { flex-direction: column; }
+      .detail-label { min-width: 120px; }
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>Multilingual Healthcare Directory</h1>
-    <p class="intro">Find healthcare providers in Western Australia who offer culturally responsive care and multilingual services.</p>
+    <h1>Community Service Directory</h1>
+    <p class="intro">Find organisations and businesses that offer multilingual and culturally responsive support in Western Australia.</p>
 
     <div class="search-filters">
       <div class="filter-group">
-        <label for="searchInput">Search by name</label>
-        <input type="text" id="searchInput" placeholder="Search provider name..." />
+        <label for="searchInput">Search</label>
+        <input type="text" id="searchInput" placeholder="Search name, category, location, language..." />
       </div>
+
       <div class="filter-group">
-        <label for="regionFilter">Filter by region</label>
-        <select id="regionFilter">
-          <option value="">All Regions</option>
+        <label for="categoryFilter">Service category</label>
+        <select id="categoryFilter">
+          <option value="">All categories</option>
         </select>
       </div>
+
       <div class="filter-group">
-        <label for="languageFilter">Filter by language</label>
+        <label for="locationFilter">Location</label>
+        <select id="locationFilter">
+          <option value="">All locations</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="languageFilter">Language supported</label>
         <select id="languageFilter">
-          <option value="">All Languages</option>
+          <option value="">All languages</option>
         </select>
       </div>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" data-type="all">All Providers</button>
-      <button class="tab" data-type="General Practitioner">GPs / Doctors</button>
-      <button class="tab" data-type="Psychologist">Psychologists</button>
-      <button class="tab" data-type="Allied Health">Allied Health</button>
-    </div>
-
-    <div id="loading" class="loading">Loading healthcare providers...</div>
+    <div id="loading" class="loading">Loading directory...</div>
     <div id="errorBox" class="error-box"></div>
-    <div id="providerGrid" class="provider-grid" style="display:none;"></div>
-    <div id="noResults" class="no-results" style="display:none;">No providers found matching your criteria.</div>
 
-    <div class="external-links">
-      <h3>Search More Providers</h3>
-      <ul>
-        <li><strong>Doctors / GPs (WA):</strong>
-          <a href="https://healthengine.com.au" target="_blank" rel="noopener">HealthEngine</a> |
-          <a href="https://hotdoc.com.au" target="_blank" rel="noopener">HotDoc</a>
-        </li>
-        <li><strong>Health services directory:</strong>
-          <a href="https://www.healthdirect.gov.au/australian-health-services" target="_blank" rel="noopener">HealthDirect</a>
-        </li>
-        <li><strong>Psychologists (WA):</strong>
-          <a href="https://psychology.org.au/find-a-psychologist" target="_blank" rel="noopener">Australian Psychological Society</a>
-        </li>
-        <li><strong>WA multicultural health services:</strong>
-          <a href="https://www.health.wa.gov.au/Articles/J_M/Multicultural-resources-for-health-professionals/Multicultural-health-services-directory"
-             target="_blank" rel="noopener">WA Health Directory</a>
-        </li>
-      </ul>
-    </div>
+    <div id="providerGrid" class="provider-grid" style="display:none;"></div>
+    <div id="noResults" class="no-results" style="display:none;">No results found matching your filters.</div>
 
     <div class="disclaimer">
       <strong>Disclaimer</strong>
-      This directory lists publicly available healthcare providers for information only and does not imply endorsement.
-      Details including availability, fees, and languages spoken may change. Please contact providers directly to confirm.
-      If you are a provider and wish to update or remove your listing, please contact us. ThriveWA does not endorse individual practitioners.
+      This directory lists submitted information for reference only and does not imply endorsement. Details may change.
+      Please contact organisations directly to confirm services, costs, and availability.
     </div>
   </div>
 
   <script>
-    // ✅ Your Google Sheet (published CSV)
+    // ✅ NEW published CSV (your form responses sheet)
     const RAW_CSV =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3jamk8r86opcs7NzKrlhMBDK3SatVNVhukfzQfvEi85X4C8qrb2XIqC9CgPeI4LTiBhjsKAHHyqJ/pub?output=csv";
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeADA3r3KBfdy2wtbdkCwbt5ozm1ZyEGE2jYsAGSDxe1v76vELbXN3iv8-QjnbsKr_ecf1QyeBTBaN/pub?output=csv";
 
-    // ✅ Your Cloudflare Worker proxy (reliable + CORS enabled)
+    // ✅ Your Cloudflare Worker proxy
     const WORKER_PROXY = "https://thrivewa-sheets-proxy.wazobia-nigeri.workers.dev/";
-
-    // ✅ This is what we fetch in the browser
     const CSV_URL = WORKER_PROXY + "?url=" + encodeURIComponent(RAW_CSV);
 
-    let allProviders = [];
-    let filteredProviders = [];
-    let currentType = "all";
+    // Column names (exactly as in your CSV headers)
+    const COL = {
+      timestamp: "Timestamp",
+      org: "Organisation / Business name",
+      contactName: "Contact person name",
+      email: "Contact email",
+      phone: "Phone number",
+      website: "Website / Social link",
+      category: "Service category",
+      categoryOther: "If other, please specify",
+      location: "Location (Suburb/City + State)",
+      description: "Brief description of service",
+      languages: "Languages Supported",
+      howLanguage: "How is language support provided?",
+      noExtraCost: "Is language support provided at no additional cost to the client?",
+      booking: "How should clients book?",
+      permission: "Permission to list",
+      note: "NOTE: For listing purposes only — please do not share personal or urgent support requests here"
+    };
+
+    let allRows = [];
+    let filteredRows = [];
 
     async function loadProviders() {
       const loadingEl = document.getElementById("loading");
       const errorBox = document.getElementById("errorBox");
 
       try {
-        const response = await fetch(CSV_URL, { cache: "no-store" });
-        const csvText = await response.text();
+        const res = await fetch(CSV_URL, { cache: "no-store" });
+        const csvText = await res.text();
 
-        if (!response.ok) {
-          throw new Error(`Proxy fetch failed (${response.status}).`);
-        }
+        if (!res.ok) throw new Error(`Proxy fetch failed (${res.status}).`);
 
         if (!looksLikeCSV(csvText)) {
-          throw new Error("Response was not CSV. (Sheet may not be published / wrong URL / proxy blocked)");
+          throw new Error("Response was not CSV. Check: published CSV URL + worker proxy.");
         }
 
-        allProviders = parseCSV(csvText);
+        allRows = parseCSV(csvText);
+
+        // ✅ Only list rows with permission = Yes
+        allRows = allRows.filter(r => isYes(r[COL.permission]));
+
         populateFilters();
-        filteredProviders = [...allProviders];
+
+        filteredRows = [...allRows];
         renderProviders();
 
         loadingEl.style.display = "none";
@@ -342,20 +311,23 @@
         document.getElementById("providerGrid").style.display = "grid";
       } catch (err) {
         console.error(err);
-        loadingEl.innerText = "Error loading healthcare providers.";
+        loadingEl.innerText = "Error loading directory.";
         errorBox.style.display = "block";
         errorBox.textContent =
           "Reason: " + (err?.message || err) + "\n\n" +
-          "Debug tip: open the worker CSV link directly to confirm it returns CSV.\n" +
-          "First chars:\n" + (String(err?.rawPreview || "").slice(0, 200) || "(no preview)");
+          "Test link (should show/download CSV):\n" + CSV_URL;
       }
+    }
+
+    function isYes(val) {
+      return String(val || "").trim().toLowerCase() === "yes";
     }
 
     function looksLikeCSV(text) {
       if (!text) return false;
       const t = text.trim();
 
-      // Reject HTML/error pages
+      // reject HTML or known error text
       if (
         t.startsWith("<!DOCTYPE") ||
         t.startsWith("<html") ||
@@ -364,11 +336,9 @@
         t.toLowerCase().includes("missing ?url=")
       ) return false;
 
-      // Must have at least 2 non-empty lines
       const lines = t.split(/\r?\n/).filter(l => l.trim() !== "");
       if (lines.length < 2) return false;
 
-      // Header must have multiple columns
       const header = lines[0];
       return header.includes(",") && header.split(",").length >= 2;
     }
@@ -413,47 +383,20 @@
           const obj = {};
           headers.forEach((h, idx) => obj[h] = (r[idx] || "").trim());
           return obj;
-        })
-        .filter(p => p.Name);
+        });
     }
 
-    // ✅ IMPORTANT FIX:
-    // Your sheet uses semicolons (;) in Languages/Tags
-    // This splits on BOTH commas and semicolons.
+    // Split list strings into array: supports commas and semicolons
     function normalizeList(str) {
       if (!str) return [];
-      return str
+      return String(str)
         .split(/[;,]/)
         .map(s => s.trim())
         .filter(Boolean);
     }
 
-    function populateFilters() {
-      const regions = [...new Set(allProviders.map(p => (p.Region || "").trim()).filter(Boolean))].sort();
-
-      const languages = [...new Set(
-        allProviders.flatMap(p => normalizeList(p.Languages))
-      )].sort();
-
-      const regionFilter = document.getElementById("regionFilter");
-      const languageFilter = document.getElementById("languageFilter");
-
-      regionFilter.innerHTML = `<option value="">All Regions</option>`;
-      languageFilter.innerHTML = `<option value="">All Languages</option>`;
-
-      regions.forEach(region => {
-        const option = document.createElement("option");
-        option.value = region;
-        option.textContent = region;
-        regionFilter.appendChild(option);
-      });
-
-      languages.forEach(language => {
-        const option = document.createElement("option");
-        option.value = language;
-        option.textContent = language;
-        languageFilter.appendChild(option);
-      });
+    function cleanText(s) {
+      return String(s || "").trim();
     }
 
     function escapeHtml(str) {
@@ -464,10 +407,60 @@
 
     function safeUrl(url) {
       const u = String(url || "").trim();
-      if (!u) return "#";
+      if (!u) return "";
       if (/^https?:\/\//i.test(u)) return u;
       if (/^www\./i.test(u)) return "https://" + u;
-      return "#";
+      return "";
+    }
+
+    function deriveCategory(row) {
+      const base = cleanText(row[COL.category]);
+      const other = cleanText(row[COL.categoryOther]);
+      if (base.toLowerCase() === "other" && other) return other;
+      return base || other || "";
+    }
+
+    function populateFilters() {
+      const categories = [...new Set(
+        allRows.map(r => deriveCategory(r)).filter(Boolean)
+      )].sort((a,b) => a.localeCompare(b));
+
+      const locations = [...new Set(
+        allRows.map(r => cleanText(r[COL.location])).filter(Boolean)
+      )].sort((a,b) => a.localeCompare(b));
+
+      const languages = [...new Set(
+        allRows.flatMap(r => normalizeList(r[COL.languages]))
+      )].sort((a,b) => a.localeCompare(b));
+
+      const categoryFilter = document.getElementById("categoryFilter");
+      const locationFilter = document.getElementById("locationFilter");
+      const languageFilter = document.getElementById("languageFilter");
+
+      categoryFilter.innerHTML = `<option value="">All categories</option>`;
+      locationFilter.innerHTML = `<option value="">All locations</option>`;
+      languageFilter.innerHTML = `<option value="">All languages</option>`;
+
+      categories.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        categoryFilter.appendChild(opt);
+      });
+
+      locations.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        locationFilter.appendChild(opt);
+      });
+
+      languages.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        languageFilter.appendChild(opt);
+      });
     }
 
     function renderProviders() {
@@ -475,7 +468,7 @@
       const noResults = document.getElementById("noResults");
       grid.innerHTML = "";
 
-      if (filteredProviders.length === 0) {
+      if (filteredRows.length === 0) {
         grid.style.display = "none";
         noResults.style.display = "block";
         return;
@@ -484,42 +477,91 @@
       grid.style.display = "grid";
       noResults.style.display = "none";
 
-      filteredProviders.forEach(provider => {
+      filteredRows.forEach(row => {
+        const org = cleanText(row[COL.org]) || "Untitled Organisation";
+        const category = deriveCategory(row);
+        const location = cleanText(row[COL.location]);
+        const desc = cleanText(row[COL.description]);
+        const languages = normalizeList(row[COL.languages]);
+        const howLang = cleanText(row[COL.howLanguage]);
+        const noExtra = cleanText(row[COL.noExtraCost]);
+        const booking = cleanText(row[COL.booking]);
+
+        const website = safeUrl(row[COL.website]);
+        const email = cleanText(row[COL.email]);
+        const phone = cleanText(row[COL.phone]);
+        const contactName = cleanText(row[COL.contactName]);
+
         const card = document.createElement("div");
         card.className = "provider-card";
 
-        const tags = normalizeList(provider.Tags);
+        const langTags = languages.slice(0, 10).map(l => `<span class="tag">${escapeHtml(l)}</span>`).join("");
+
+        const actions = [];
+        if (website) actions.push(`<a class="btn" href="${website}" target="_blank" rel="noopener">Website</a>`);
+        if (email) actions.push(`<a class="btn secondary" href="mailto:${encodeURIComponent(email)}">Email</a>`);
+        if (phone) actions.push(`<a class="btn secondary" href="tel:${escapeHtml(phone)}">Call</a>`);
 
         card.innerHTML = `
           <div class="provider-header">
             <div>
-              <div class="provider-name">${escapeHtml(provider.Name)}</div>
-              <div class="provider-specialty">${escapeHtml(provider.Specialty || provider["Provider Type"] || "")}</div>
+              <div class="provider-name">${escapeHtml(org)}</div>
+              <div class="provider-specialty">${escapeHtml(category || "Service")}</div>
             </div>
           </div>
 
           <div class="provider-details">
-            ${provider.Region ? `
+            ${location ? `
               <div class="detail-row">
-                <span class="detail-label">Region:</span>
-                <span class="detail-value">${escapeHtml(provider.Region)}${provider.Location ? " - " + escapeHtml(provider.Location) : ""}</span>
+                <span class="detail-label">Location</span>
+                <span class="detail-value">${escapeHtml(location)}</span>
               </div>` : ""}
 
-            ${provider.Languages ? `
+            ${desc ? `
               <div class="detail-row">
-                <span class="detail-label">Languages:</span>
-                <span class="detail-value">${escapeHtml(provider.Languages)}</span>
+                <span class="detail-label">Description</span>
+                <span class="detail-value">${escapeHtml(desc)}</span>
+              </div>` : ""}
+
+            ${languages.length ? `
+              <div class="detail-row">
+                <span class="detail-label">Languages</span>
+                <span class="detail-value">${escapeHtml(languages.join(", "))}</span>
+              </div>` : ""}
+
+            ${howLang ? `
+              <div class="detail-row">
+                <span class="detail-label">Language support</span>
+                <span class="detail-value">${escapeHtml(howLang)}</span>
+              </div>` : ""}
+
+            ${noExtra ? `
+              <div class="detail-row">
+                <span class="detail-label">No extra cost</span>
+                <span class="detail-value">${escapeHtml(noExtra)}</span>
+              </div>` : ""}
+
+            ${booking ? `
+              <div class="detail-row">
+                <span class="detail-label">How to book</span>
+                <span class="detail-value">${escapeHtml(booking)}</span>
+              </div>` : ""}
+
+            ${(contactName || email || phone) ? `
+              <div class="detail-row">
+                <span class="detail-label">Contact</span>
+                <span class="detail-value">
+                  ${contactName ? escapeHtml(contactName) : ""}
+                  ${contactName && (email || phone) ? " — " : ""}
+                  ${email ? escapeHtml(email) : ""}
+                  ${email && phone ? " / " : ""}
+                  ${phone ? escapeHtml(phone) : ""}
+                </span>
               </div>` : ""}
           </div>
 
-          ${tags.length ? `
-            <div class="tags">
-              ${tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
-            </div>` : ""}
-
-          ${provider.Contact ? `
-            <a href="${safeUrl(provider.Contact)}" class="contact-btn" target="_blank" rel="noopener">View Profile</a>
-          ` : ""}
+          ${languages.length ? `<div class="tags">${langTags}</div>` : ""}
+          ${actions.length ? `<div class="actions">${actions.join("")}</div>` : ""}
         `;
 
         grid.appendChild(card);
@@ -527,45 +569,40 @@
     }
 
     function filterProviders() {
-      const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-      const regionFilter = document.getElementById("regionFilter").value;
+      const q = document.getElementById("searchInput").value.toLowerCase().trim();
+      const categoryFilter = document.getElementById("categoryFilter").value;
+      const locationFilter = document.getElementById("locationFilter").value;
       const languageFilter = document.getElementById("languageFilter").value;
 
-      filteredProviders = allProviders.filter(provider => {
-        const name = (provider.Name || "").toLowerCase();
-        const specialty = (provider.Specialty || "").toLowerCase();
+      filteredRows = allRows.filter(row => {
+        const org = cleanText(row[COL.org]).toLowerCase();
+        const cat = deriveCategory(row).toLowerCase();
+        const loc = cleanText(row[COL.location]).toLowerCase();
+        const desc = cleanText(row[COL.description]).toLowerCase();
+        const langs = normalizeList(row[COL.languages]).map(x => x.toLowerCase());
 
-        const matchesSearch =
-          !searchTerm || name.includes(searchTerm) || specialty.includes(searchTerm);
+        const matchesSearch = !q || (
+          org.includes(q) ||
+          cat.includes(q) ||
+          loc.includes(q) ||
+          desc.includes(q) ||
+          langs.some(l => l.includes(q))
+        );
 
-        const matchesType =
-          currentType === "all" ||
-          provider["Provider Type"] === currentType ||
-          provider.Specialty === currentType;
+        const matchesCategory = !categoryFilter || deriveCategory(row) === categoryFilter;
+        const matchesLocation = !locationFilter || cleanText(row[COL.location]) === locationFilter;
+        const matchesLanguage = !languageFilter || normalizeList(row[COL.languages]).includes(languageFilter);
 
-        const matchesRegion = !regionFilter || provider.Region === regionFilter;
-
-        const providerLanguages = normalizeList(provider.Languages);
-        const matchesLanguage = !languageFilter || providerLanguages.includes(languageFilter);
-
-        return matchesSearch && matchesType && matchesRegion && matchesLanguage;
+        return matchesSearch && matchesCategory && matchesLocation && matchesLanguage;
       });
 
       renderProviders();
     }
 
     document.getElementById("searchInput").addEventListener("input", filterProviders);
-    document.getElementById("regionFilter").addEventListener("change", filterProviders);
+    document.getElementById("categoryFilter").addEventListener("change", filterProviders);
+    document.getElementById("locationFilter").addEventListener("change", filterProviders);
     document.getElementById("languageFilter").addEventListener("change", filterProviders);
-
-    document.querySelectorAll(".tab").forEach(tab => {
-      tab.addEventListener("click", function () {
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        this.classList.add("active");
-        currentType = this.dataset.type;
-        filterProviders();
-      });
-    });
 
     loadProviders();
   </script>
