@@ -149,9 +149,7 @@
       color: #0277bd;
     }
 
-    .btn.secondary:hover {
-      background: #d6ecff;
-    }
+    .btn.secondary:hover { background: #d6ecff; }
 
     .no-results {
       text-align: center;
@@ -251,33 +249,66 @@
   </div>
 
   <script>
-    // ✅ NEW published CSV (your form responses sheet)
-    const RAW_CSV =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeADA3r3KBfdy2wtbdkCwbt5ozm1ZyEGE2jYsAGSDxe1v76vELbXN3iv8-QjnbsKr_ecf1QyeBTBaN/pub?output=csv";
+    /**
+     * ✅ IMPORTANT: Your Approved sheet currently has NO header row.
+     * This code handles BOTH:
+     * 1) Sheets WITH headers
+     * 2) Sheets WITHOUT headers (your current case)
+     */
 
     // ✅ Your Cloudflare Worker proxy
     const WORKER_PROXY = "https://thrivewa-sheets-proxy.wazobia-nigeri.workers.dev/";
-    const CSV_URL = WORKER_PROXY + "?url=" + encodeURIComponent(RAW_CSV);
 
-    // Column names (exactly as in your CSV headers)
+    // ✅ Use GViz CSV export for the "Approved" sheet by name
+    // NOTE: This URL must work when opened directly in a browser.
+    const GVIZ_CSV =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeADA3r3KBfdy2wtbdkCwbt5ozm1ZyEGE2jYsAGSDxe1v76vELbXN3iv8-QjnbsKr_ecf1QyeBTBaN/gviz/tq?sheet=Approved&tqx=out:csv";
+
+    // ✅ What we fetch (CORS-safe via your Worker)
+    const CSV_URL = WORKER_PROXY + "?url=" + encodeURIComponent(GVIZ_CSV);
+
+    // Candidate header names (in case headers exist)
     const COL = {
-      timestamp: "Timestamp",
-      org: "Organisation / Business name",
-      contactName: "Contact person name",
-      email: "Contact email",
-      phone: "Phone number",
-      website: "Website / Social link",
-      category: "Service category",
-      categoryOther: "If other, please specify",
-      location: "Location (Suburb/City + State)",
-      description: "Brief description of service",
-      languages: "Languages Supported",
-      howLanguage: "How is language support provided?",
-      noExtraCost: "Is language support provided at no additional cost to the client?",
-      booking: "How should clients book?",
-      permission: "Permission to list",
-      note: "NOTE: For listing purposes only — please do not share personal or urgent support requests here"
+      org: ["Organisation / Business name", "Organisation / Employer name", "Organisation / Business Name", "Organisation"],
+      contactName: ["Contact person name", "Contact Name", "Contact person"],
+      email: ["Contact email", "Contact email (for enquiries)", "Email"],
+      phone: ["Phone number", "Phone"],
+      website: ["Website / Social link", "Website", "Website / Social"],
+      category: ["Service category", "Category", "Service Category"],
+      categoryOther: ["If other, please specify", "Other (specify)"],
+      location: ["Location (Suburb/City + State)", "Location", "Suburb/City + State"],
+      description: ["Brief description of service", "Description", "Service description"],
+      languages: ["Languages Supported", "Languages", "Languages supported"],
+      howLanguage: ["How is language support provided?", "Language support provided"],
+      noExtraCost: ["Is language support provided at no additional cost to the client?", "No additional cost", "No extra cost"],
+      booking: ["How should clients book?", "How to book", "Booking method"],
+      permission: ["Permission to list", "Permission"],
+      status: ["Status", "Approval Status", "Approved Status"]
     };
+
+    // ✅ If the Approved sheet has NO headers, we map columns by position (A→S)
+    // Adjust these ONLY if your Approved tab column order changes.
+    const FALLBACK_HEADERS = [
+      "Timestamp",                               // A
+      "Organisation / Business name",            // B
+      "Contact person name",                     // C
+      "Contact email",                           // D
+      "Phone number",                            // E
+      "Website / Social link",                   // F
+      "Service category",                        // G
+      "If other, please specify",                // H
+      "Location (Suburb/City + State)",          // I
+      "Brief description of service",            // J
+      "Languages Supported",                     // K
+      "How is language support provided?",       // L
+      "Is language support provided at no additional cost to the client?", // M
+      "How should clients book?",                // N
+      "Permission to list",                      // O
+      "Extra 1",                                 // P (optional)
+      "Extra 2",                                 // Q (optional)
+      "Extra 3",                                 // R (optional)
+      "Status"                                   // S
+    ];
 
     let allRows = [];
     let filteredRows = [];
@@ -290,19 +321,31 @@
         const res = await fetch(CSV_URL, { cache: "no-store" });
         const csvText = await res.text();
 
-        if (!res.ok) throw new Error(`Proxy fetch failed (${res.status}).`);
-
-        if (!looksLikeCSV(csvText)) {
-          throw new Error("Response was not CSV. Check: published CSV URL + worker proxy.");
-        }
+        if (!res.ok) throw new Error(`Proxy fetch failed (${res.status}).\nURL: ${CSV_URL}`);
+        if (!looksLikeCSV(csvText)) throw new Error("Response was not CSV. Check: sheet published + worker proxy.");
 
         allRows = parseCSV(csvText);
 
-        // ✅ Only list rows with permission = Yes
-        allRows = allRows.filter(r => isYes(r[COL.permission]));
+        // ✅ Only show rows that are safe to list:
+        // - Permission = Yes (if present)
+        // - Status = Approved (if present)
+        allRows = allRows.filter(r => {
+          const perm = getVal(r, COL.permission) || r["Permission to list"];
+          const status = getVal(r, COL.status) || r["Status"];
+
+          const permissionOk = perm ? isYes(perm) : true;
+          const statusOk = status ? String(status).trim().toLowerCase() === "approved" : true;
+
+          const org = getVal(r, COL.org) || r["Organisation / Business name"];
+          const website = getVal(r, COL.website) || r["Website / Social link"];
+          const email = getVal(r, COL.email) || r["Contact email"];
+          const phone = getVal(r, COL.phone) || r["Phone number"];
+          const hasIdentity = !!(org || website || email || phone);
+
+          return permissionOk && statusOk && hasIdentity;
+        });
 
         populateFilters();
-
         filteredRows = [...allRows];
         renderProviders();
 
@@ -314,36 +357,24 @@
         loadingEl.innerText = "Error loading directory.";
         errorBox.style.display = "block";
         errorBox.textContent =
-          "Reason: " + (err?.message || err) + "\n\n" +
-          "Test link (should show/download CSV):\n" + CSV_URL;
+          "Reason:\n" + (err?.message || err) + "\n\n" +
+          "Direct CSV test (should download CSV):\n" + GVIZ_CSV + "\n\n" +
+          "Proxy test (should download CSV):\n" + CSV_URL + "\n\n" +
+          "If your page is opened as file:// then fetch may be blocked—host it (GitHub Pages / Netlify).";
       }
-    }
-
-    function isYes(val) {
-      return String(val || "").trim().toLowerCase() === "yes";
     }
 
     function looksLikeCSV(text) {
       if (!text) return false;
       const t = text.trim();
-
-      // reject HTML or known error text
-      if (
-        t.startsWith("<!DOCTYPE") ||
-        t.startsWith("<html") ||
-        t.toLowerCase().includes("sign in") ||
-        t.toLowerCase().includes("sorry, the file you have requested does not exist") ||
-        t.toLowerCase().includes("missing ?url=")
-      ) return false;
-
+      if (t.startsWith("<!DOCTYPE") || t.startsWith("<html") || t.toLowerCase().includes("sorry, the file")) return false;
       const lines = t.split(/\r?\n/).filter(l => l.trim() !== "");
-      if (lines.length < 2) return false;
-
-      const header = lines[0];
-      return header.includes(",") && header.split(",").length >= 2;
+      return lines.length >= 2 && lines[0].includes(",") && lines[0].split(",").length >= 2;
     }
 
-    // Robust CSV parser (handles commas inside quotes)
+    // ✅ CSV parser that supports:
+    // - quoted commas
+    // - header sheet OR headerless sheet (Approved tab)
     function parseCSV(text) {
       const rows = [];
       let row = [];
@@ -351,52 +382,59 @@
       let inQuotes = false;
 
       for (let i = 0; i < text.length; i++) {
-        const char = text[i];
+        const ch = text[i];
 
-        if (char === '"' && text[i + 1] === '"') {
-          value += '"';
-          i++;
-        } else if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === "," && !inQuotes) {
-          row.push(value.trim());
-          value = "";
-        } else if (char === "\n" && !inQuotes) {
-          row.push(value.trim());
-          rows.push(row);
-          row = [];
-          value = "";
-        } else {
-          value += char;
-        }
+        if (ch === '"' && text[i + 1] === '"') { value += '"'; i++; }
+        else if (ch === '"') inQuotes = !inQuotes;
+        else if (ch === "," && !inQuotes) { row.push(value.trim()); value = ""; }
+        else if (ch === "\n" && !inQuotes) { row.push(value.trim()); rows.push(row); row = []; value = ""; }
+        else value += ch;
+      }
+      if (value.length || row.length) { row.push(value.trim()); rows.push(row); }
+
+      const cleaned = rows.filter(r => r.some(cell => (cell || "").trim() !== ""));
+      if (!cleaned.length) return [];
+
+      // Detect if first row looks like headers
+      const first = cleaned[0].map(x => String(x || "").trim().toLowerCase());
+      const looksLikeHeaders =
+        first.includes("timestamp") ||
+        first.some(x => x.includes("organisation")) ||
+        first.some(x => x.includes("languages")) ||
+        first.some(x => x.includes("permission"));
+
+      let headers, dataRows;
+
+      if (looksLikeHeaders) {
+        headers = cleaned.shift().map(h => String(h || "").trim());
+        dataRows = cleaned;
+      } else {
+        headers = FALLBACK_HEADERS;
+        dataRows = cleaned;
       }
 
-      if (value.length || row.length) {
-        row.push(value.trim());
-        rows.push(row);
-      }
-
-      const headers = (rows.shift() || []).map(h => h.trim());
-      return rows
-        .filter(r => r.some(cell => (cell || "").trim() !== ""))
-        .map(r => {
-          const obj = {};
-          headers.forEach((h, idx) => obj[h] = (r[idx] || "").trim());
-          return obj;
-        });
+      return dataRows.map(r => {
+        const obj = {};
+        headers.forEach((h, idx) => obj[h] = (r[idx] || "").trim());
+        return obj;
+      });
     }
 
-    // Split list strings into array: supports commas and semicolons
+    function getVal(row, candidates) {
+      for (const key of candidates) {
+        const v = row[key];
+        if (v != null && String(v).trim() !== "") return String(v).trim();
+      }
+      return "";
+    }
+
+    function isYes(val) {
+      return String(val || "").trim().toLowerCase() === "yes";
+    }
+
     function normalizeList(str) {
       if (!str) return [];
-      return String(str)
-        .split(/[;,]/)
-        .map(s => s.trim())
-        .filter(Boolean);
-    }
-
-    function cleanText(s) {
-      return String(s || "").trim();
+      return String(str).split(/[;,]/).map(s => s.trim()).filter(Boolean);
     }
 
     function escapeHtml(str) {
@@ -414,24 +452,16 @@
     }
 
     function deriveCategory(row) {
-      const base = cleanText(row[COL.category]);
-      const other = cleanText(row[COL.categoryOther]);
-      if (base.toLowerCase() === "other" && other) return other;
+      const base = getVal(row, COL.category) || row["Service category"];
+      const other = getVal(row, COL.categoryOther) || row["If other, please specify"];
+      if (base && base.toLowerCase() === "other" && other) return other;
       return base || other || "";
     }
 
     function populateFilters() {
-      const categories = [...new Set(
-        allRows.map(r => deriveCategory(r)).filter(Boolean)
-      )].sort((a,b) => a.localeCompare(b));
-
-      const locations = [...new Set(
-        allRows.map(r => cleanText(r[COL.location])).filter(Boolean)
-      )].sort((a,b) => a.localeCompare(b));
-
-      const languages = [...new Set(
-        allRows.flatMap(r => normalizeList(r[COL.languages]))
-      )].sort((a,b) => a.localeCompare(b));
+      const categories = [...new Set(allRows.map(r => deriveCategory(r)).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+      const locations = [...new Set(allRows.map(r => getVal(r, COL.location) || r["Location (Suburb/City + State)"]).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+      const languages = [...new Set(allRows.flatMap(r => normalizeList(getVal(r, COL.languages) || r["Languages Supported"]))).sort((a,b) => a.localeCompare(b))];
 
       const categoryFilter = document.getElementById("categoryFilter");
       const locationFilter = document.getElementById("locationFilter");
@@ -441,26 +471,9 @@
       locationFilter.innerHTML = `<option value="">All locations</option>`;
       languageFilter.innerHTML = `<option value="">All languages</option>`;
 
-      categories.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
-        categoryFilter.appendChild(opt);
-      });
-
-      locations.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
-        locationFilter.appendChild(opt);
-      });
-
-      languages.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
-        languageFilter.appendChild(opt);
-      });
+      categories.forEach(v => categoryFilter.appendChild(new Option(v, v)));
+      locations.forEach(v => locationFilter.appendChild(new Option(v, v)));
+      languages.forEach(v => languageFilter.appendChild(new Option(v, v)));
     }
 
     function renderProviders() {
@@ -478,35 +491,32 @@
       noResults.style.display = "none";
 
       filteredRows.forEach(row => {
-        const org = cleanText(row[COL.org]) || "Untitled Organisation";
-        const category = deriveCategory(row);
-        const location = cleanText(row[COL.location]);
-        const desc = cleanText(row[COL.description]);
-        const languages = normalizeList(row[COL.languages]);
-        const howLang = cleanText(row[COL.howLanguage]);
-        const noExtra = cleanText(row[COL.noExtraCost]);
-        const booking = cleanText(row[COL.booking]);
+        const org = getVal(row, COL.org) || row["Organisation / Business name"] || "Untitled Organisation";
+        const category = deriveCategory(row) || "Service";
+        const location = getVal(row, COL.location) || row["Location (Suburb/City + State)"];
+        const desc = getVal(row, COL.description) || row["Brief description of service"];
 
-        const website = safeUrl(row[COL.website]);
-        const email = cleanText(row[COL.email]);
-        const phone = cleanText(row[COL.phone]);
-        const contactName = cleanText(row[COL.contactName]);
+        const languages = normalizeList(getVal(row, COL.languages) || row["Languages Supported"]);
+        const howLang = getVal(row, COL.howLanguage) || row["How is language support provided?"];
+        const noExtra = getVal(row, COL.noExtraCost) || row["Is language support provided at no additional cost to the client?"];
+        const booking = getVal(row, COL.booking) || row["How should clients book?"];
 
-        const card = document.createElement("div");
-        card.className = "provider-card";
-
-        const langTags = languages.slice(0, 10).map(l => `<span class="tag">${escapeHtml(l)}</span>`).join("");
+        const website = safeUrl(getVal(row, COL.website) || row["Website / Social link"]);
+        const email = getVal(row, COL.email) || row["Contact email"];
+        const phone = getVal(row, COL.phone) || row["Phone number"];
 
         const actions = [];
         if (website) actions.push(`<a class="btn" href="${website}" target="_blank" rel="noopener">Website</a>`);
         if (email) actions.push(`<a class="btn secondary" href="mailto:${encodeURIComponent(email)}">Email</a>`);
         if (phone) actions.push(`<a class="btn secondary" href="tel:${escapeHtml(phone)}">Call</a>`);
 
+        const card = document.createElement("div");
+        card.className = "provider-card";
         card.innerHTML = `
           <div class="provider-header">
             <div>
               <div class="provider-name">${escapeHtml(org)}</div>
-              <div class="provider-specialty">${escapeHtml(category || "Service")}</div>
+              <div class="provider-specialty">${escapeHtml(category)}</div>
             </div>
           </div>
 
@@ -546,21 +556,13 @@
                 <span class="detail-label">How to book</span>
                 <span class="detail-value">${escapeHtml(booking)}</span>
               </div>` : ""}
-
-            ${(contactName || email || phone) ? `
-              <div class="detail-row">
-                <span class="detail-label">Contact</span>
-                <span class="detail-value">
-                  ${contactName ? escapeHtml(contactName) : ""}
-                  ${contactName && (email || phone) ? " — " : ""}
-                  ${email ? escapeHtml(email) : ""}
-                  ${email && phone ? " / " : ""}
-                  ${phone ? escapeHtml(phone) : ""}
-                </span>
-              </div>` : ""}
           </div>
 
-          ${languages.length ? `<div class="tags">${langTags}</div>` : ""}
+          ${languages.length ? `
+            <div class="tags">
+              ${languages.slice(0, 12).map(l => `<span class="tag">${escapeHtml(l)}</span>`).join("")}
+            </div>` : ""}
+
           ${actions.length ? `<div class="actions">${actions.join("")}</div>` : ""}
         `;
 
@@ -575,11 +577,11 @@
       const languageFilter = document.getElementById("languageFilter").value;
 
       filteredRows = allRows.filter(row => {
-        const org = cleanText(row[COL.org]).toLowerCase();
-        const cat = deriveCategory(row).toLowerCase();
-        const loc = cleanText(row[COL.location]).toLowerCase();
-        const desc = cleanText(row[COL.description]).toLowerCase();
-        const langs = normalizeList(row[COL.languages]).map(x => x.toLowerCase());
+        const org = (getVal(row, COL.org) || row["Organisation / Business name"] || "").toLowerCase();
+        const cat = (deriveCategory(row) || "").toLowerCase();
+        const loc = (getVal(row, COL.location) || row["Location (Suburb/City + State)"] || "").toLowerCase();
+        const desc = (getVal(row, COL.description) || row["Brief description of service"] || "").toLowerCase();
+        const langs = normalizeList(getVal(row, COL.languages) || row["Languages Supported"]).map(x => x.toLowerCase());
 
         const matchesSearch = !q || (
           org.includes(q) ||
@@ -590,8 +592,8 @@
         );
 
         const matchesCategory = !categoryFilter || deriveCategory(row) === categoryFilter;
-        const matchesLocation = !locationFilter || cleanText(row[COL.location]) === locationFilter;
-        const matchesLanguage = !languageFilter || normalizeList(row[COL.languages]).includes(languageFilter);
+        const matchesLocation = !locationFilter || (getVal(row, COL.location) || row["Location (Suburb/City + State)"] || "") === locationFilter;
+        const matchesLanguage = !languageFilter || normalizeList(getVal(row, COL.languages) || row["Languages Supported"]).includes(languageFilter);
 
         return matchesSearch && matchesCategory && matchesLocation && matchesLanguage;
       });
